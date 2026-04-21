@@ -1,1 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Thread Splitter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-bottom: 10px;
+    }
+    .output {
+      margin-top: 20px;
+    }
+    .post {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+    button {
+      margin-top: 10px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
 
+<h2>Thread Builder</h2>
+
+<label>Platform:</label>
+<select id="platform">
+  <option value="280">X (280)</option>
+  <option value="10000">Threads (10,000)</option>
+  <option value="custom">Custom</option>
+</select>
+
+<input id="customLimit" type="number" placeholder="Enter custom limit" style="display:none;" />
+
+<br><br>
+
+<textarea id="inputText" placeholder="Start typing..."></textarea>
+<div id="charCount">0 characters</div>
+
+<button onclick="generateThread()">Generate Thread</button>
+<button onclick="copyAll()">Copy All</button>
+
+<div class="output" id="output"></div>
+
+<script>
+const input = document.getElementById("inputText");
+const charCount = document.getElementById("charCount");
+const platform = document.getElementById("platform");
+const customLimit = document.getElementById("customLimit");
+
+input.addEventListener("input", () => {
+  charCount.innerText = input.value.length + " characters";
+});
+
+platform.addEventListener("change", () => {
+  customLimit.style.display = platform.value === "custom" ? "inline" : "none";
+});
+
+function getLimit() {
+  if (platform.value === "custom") {
+    return parseInt(customLimit.value) || 280;
+  }
+  return parseInt(platform.value);
+}
+
+function splitText(text, limit) {
+  let parts = [];
+  let remaining = text;
+
+  while (remaining.length > limit) {
+    let chunk = remaining.slice(0, limit);
+
+    // try to split at last sentence or space
+    let lastPeriod = chunk.lastIndexOf(".");
+    let lastSpace = chunk.lastIndexOf(" ");
+
+    let splitIndex = Math.max(lastPeriod, lastSpace);
+
+    if (splitIndex > 50) {
+      chunk = chunk.slice(0, splitIndex + 1);
+    }
+
+    parts.push(chunk.trim());
+    remaining = remaining.slice(chunk.length).trim();
+  }
+
+  if (remaining.length) {
+    parts.push(remaining);
+  }
+
+  return parts;
+}
+
+function generateThread() {
+  const text = input.value;
+  const limit = getLimit();
+  const outputDiv = document.getElementById("output");
+  outputDiv.innerHTML = "";
+
+  const parts = splitText(text, limit);
+
+  parts.forEach((part, index) => {
+    const postDiv = document.createElement("div");
+    postDiv.className = "post";
+
+    const numbered = `${part} (${index + 1}/${parts.length})`;
+
+    postDiv.innerText = numbered;
+
+    const btn = document.createElement("button");
+    btn.innerText = "Copy";
+    btn.onclick = () => navigator.clipboard.writeText(numbered);
+
+    postDiv.appendChild(document.createElement("br"));
+    postDiv.appendChild(btn);
+
+    outputDiv.appendChild(postDiv);
+  });
+}
+
+function copyAll() {
+  const posts = document.querySelectorAll(".post");
+  let fullText = "";
+
+  posts.forEach(post => {
+    fullText += post.innerText.replace("Copy", "").trim() + "\n\n";
+  });
+
+  navigator.clipboard.writeText(fullText.trim());
+}
+</script>
+
+</body>
+</html>
